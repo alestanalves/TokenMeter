@@ -1,85 +1,138 @@
 # ESP32 Token Meter
 
-Dashboard local para uma ESP32 com display TFT 2.8" 240x320 e touch. A tela mostra uso local do Codex pessoal e o status de limite do Claude Code pessoal.
+<p align="center">
+  <img src="imgs/project-logo.png" alt="ESP32 Token Meter logo" width="260">
+</p>
 
-O projeto foi feito para rodar sozinho na ESP32 depois do upload. O PC fica responsavel apenas por expor uma bridge HTTP local com os dados que nao existem em API publica para contas pessoais.
+<p align="center">
+  <a href="README.pt-BR.md">Portuguese / Português do Brasil</a>
+</p>
 
-## O Que Ele Mostra
+![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32-orange)
+![Framework](https://img.shields.io/badge/framework-Arduino-00979D)
+![UI](https://img.shields.io/badge/UI-LVGL-00AEEF)
+![Display](https://img.shields.io/badge/display-ILI9341%202.8%22-27C3A3)
+![Touch](https://img.shields.io/badge/touch-XPT2046-F6B73C)
+![Backend](https://img.shields.io/badge/backend-Python%203-3776AB)
 
-- Codex: tokens lidos do banco local `~/.codex/state_5.sqlite`.
-- Claude Code: porcentagem/status lidos do `statusLine` do Claude Code em `server/claude_status.json`.
-- ESP32: conecta no Wi-Fi e consulta os endpoints locais.
+Local token and limit dashboard for an ESP32 2.8-inch TFT touch display. The firmware shows local Codex usage and Claude Code status by polling a small HTTP bridge running on your computer.
 
-Nao usamos OpenAI Platform Usage/Costs API, Codex Enterprise Analytics nem Anthropic Admin API. Para contas pessoais, Codex e Claude Code nao oferecem uma API publica completa de limite individual. Por isso este projeto usa fontes locais.
+The ESP32 does not call OpenAI, Anthropic, Codex, or Claude APIs directly. Personal Codex and Claude Code accounts do not expose a complete public per-user usage API, so this project reads local data sources:
 
-## Estrutura
+- Codex: token counts from `~/.codex/state_5.sqlite`.
+- Claude Code: local session history plus the Claude Code `statusLine` output written to `server/claude_status.json`.
+- ESP32: Wi-Fi client that polls the bridge endpoints and renders the values with LVGL.
+
+## Features
+
+- ESP32 firmware for the ESP32-2432S028R / CYD-style 240x320 TFT board.
+- Local Python bridge with `/api/codex`, `/api/claude`, `/api/summary`, and `/api/health`.
+- Codex local SQLite usage reader.
+- Claude Code local JSON/JSONL history reader.
+- Claude Code `statusLine` installer for live 5-hour / 7-day status when available.
+- Configurable refresh interval, local bridge URLs, and manual token limits.
+- Touch refresh button on the display.
+
+## Hardware Components
+
+Recommended hardware:
+
+- ESP32-2432S028R / CYD board, or equivalent.
+- 2.8-inch 240x320 TFT display with ILI9341 driver.
+- XPT2046 resistive touch controller.
+- ESP32 module with Wi-Fi.
+- USB cable for power, flashing, and serial monitor.
+- Windows PC running the local bridge.
+- Optional USB serial driver such as CH340, depending on your board.
+
+Optional printed support:
+
+- [Bongo Cat Mini Monitor Animated ESP32 Display on MakerWorld](https://makerworld.com/pt/models/1654522-bongo-cat-mini-monitor-animated-esp32-display?from=search#profileId-1749680)
+
+Check the MakerWorld model page for print files, fit, license, attribution, and remix rules before printing or sharing modified parts.
+
+## Software Stack
+
+- PlatformIO
+- Arduino framework for ESP32
+- LVGL 8.4
+- TFT_eSPI
+- ArduinoJson
+- Python 3 standard library HTTP server
+- PowerShell script for Claude Code `statusLine`
+
+## Project Structure
 
 ```text
 .
 +- src/
-|  +- main.cpp              # Firmware LVGL/TFT/Wi-Fi
-|  +- logo_assets.c         # Assets gerados a partir de imgs/
+|  +- main.cpp              # ESP32 firmware, LVGL UI, Wi-Fi, HTTP polling
+|  +- logo_assets.c         # Generated LVGL image assets
 +- imgs/
+|  +- project-logo.png      # AI-generated project logo
 |  +- codex.png
 |  +- claudecode.png
 +- include/
-|  +- config.h              # Defaults e fallback
-|  +- config.example.h      # Exemplo para overrides locais
-|  +- lv_conf.h             # Config LVGL
+|  +- config.h              # Defaults and local override hook
+|  +- config.example.h
+|  +- lv_conf.h
 +- scripts/
-|  +- load_env.py           # Injeta .env no build PlatformIO
+|  +- load_env.py           # Injects .env values into PlatformIO build flags
 |  +- install_claude_statusline.py
 |  +- claude_statusline.ps1
 |  +- generate_logo_assets.py
 +- server/
-|  +- run_server.py         # Bridge HTTP local
+|  +- run_server.py         # Local HTTP bridge
 |  +- config.example.json
 +- platformio.ini
 +- README.md
++- README.pt-BR.md
 ```
 
-Arquivos locais ignorados pelo Git:
+Local files intentionally ignored by Git:
 
 ```text
 .env
+.pio/
+.vscode/
 server/config.json
 server/claude_status.json
 include/config.local.h
-.pio/
+__pycache__/
+*.pyc
 ```
 
-## Requisitos
+## Requirements
 
-- Windows com PowerShell.
+- Windows with PowerShell.
 - Python 3.
-- PlatformIO CLI ou extensao PlatformIO no VS Code.
-- ESP32 com CH340 ou driver serial equivalente.
-- Claude Code instalado e autenticado.
-- Codex usado nesta maquina, para existir `~/.codex/state_5.sqlite`.
-- Placa ESP32-2432S028R/CYD ou equivalente com TFT 2.8" 240x320.
+- PlatformIO CLI or the PlatformIO VS Code extension.
+- Claude Code installed and authenticated.
+- Codex used on the same machine, so `~/.codex/state_5.sqlite` exists.
+- ESP32-2432S028R / CYD-style board or compatible wiring.
 
-Verificacoes rapidas:
+Quick checks:
 
 ```powershell
 py -3 --version
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe --version
 ```
 
-Se `platformio.exe` nao existir, instale pela extensao PlatformIO do VS Code ou pelo Python:
+If PlatformIO is not installed, install it through the VS Code extension or with Python:
 
 ```powershell
 py -3 -m pip install platformio
 ```
 
-## 1. Instalar Claude Code
+## 1. Install Claude Code
 
-Instale o Claude Code:
+Install Claude Code:
 
 ```powershell
 irm https://claude.ai/install.ps1 | iex
 ```
 
-Se o instalador avisar que `C:\Users\SEU_USUARIO\.local\bin` nao esta no PATH, adicione ao PATH do usuario:
+If the installer says `C:\Users\YOUR_USER\.local\bin` is not in your `PATH`, add it:
 
 ```powershell
 $claudeBin = Join-Path $env:USERPROFILE ".local\bin"
@@ -90,62 +143,57 @@ if (($userPath -split ";") -notcontains $claudeBin) {
 $env:Path += ";$claudeBin"
 ```
 
-Teste:
+Test it:
 
 ```powershell
 claude --version
-```
-
-Abra o Claude Code e autentique se necessario:
-
-```powershell
 claude
 ```
 
-Nao rode Claude Code com `--bare` ou `--safe-mode` para este projeto, porque esses modos podem ignorar customizacoes como `statusLine`.
+Do not run Claude Code with `--bare` or `--safe-mode` for this project, because those modes can ignore customizations such as `statusLine`.
 
-## 2. Configurar o StatusLine do Claude Code
+## 2. Configure Claude Code StatusLine
 
-Na raiz do projeto:
+From the project root:
 
 ```powershell
-cd C:\Users\SEU_USUARIO\Documents\codes\codex-claude-project
+cd C:\Users\YOUR_USER\Documents\codes\codex-claude-project
 py -3 scripts\install_claude_statusline.py
 ```
 
-Esse script edita:
+The installer updates:
 
 ```text
-C:\Users\SEU_USUARIO\.claude\settings.json
+C:\Users\YOUR_USER\.claude\settings.json
 ```
 
-E instala um comando parecido com:
+It installs a command similar to:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "...\scripts\claude_statusline.ps1"
 ```
 
-Agora abra o Claude Code normalmente e mande qualquer mensagem. Depois confira se o arquivo foi criado:
+Open Claude Code normally and send any message. Then verify that the local status file exists:
 
 ```powershell
 Test-Path .\server\claude_status.json
 Get-Content .\server\claude_status.json
 ```
 
-Se `Test-Path` retornar `False`, o Claude Code ainda nao executou o `statusLine`. Feche e abra o terminal/Claude Code de novo, rode `claude`, envie uma mensagem simples e teste novamente.
+If it does not exist, restart the terminal, run `claude`, send a simple message, and run the installer again if needed.
 
-## 3. Configurar o .env do Firmware
+## 3. Configure Firmware Environment
 
-Crie um arquivo `.env` na raiz do projeto.
+Create a local `.env` file in the project root. Do not commit it.
 
-Exemplo:
+Example:
 
 ```env
-WIFI_SSID=sua-rede
-WIFI_PASSWORD=sua-senha
+WIFI_SSID=your-network
+WIFI_PASSWORD=your-password
 
-CODEX_BRIDGE_URL=http://192.168.15.12:8787/api/codex
-CLAUDE_BRIDGE_URL=http://192.168.15.12:8787/api/claude
+CODEX_BRIDGE_URL=http://192.168.1.50:8787/api/codex
+CLAUDE_BRIDGE_URL=http://192.168.1.50:8787/api/claude
 
 USE_CODEX=1
 USE_CLAUDE=1
@@ -159,27 +207,25 @@ CLAUDE_TOKEN_LIMIT=0
 DEVICE_NAME=TokenMeter
 ```
 
-`REFRESH_INTERVAL_MS=5000` significa que a ESP32 busca dados a cada 5 segundos. Para 5 minutos, use `300000`.
+Use the IPv4 address of the computer running the bridge. Do not use `localhost` in ESP32 firmware, because `localhost` would point to the ESP32 itself.
 
-Descubra o IP do PC:
+Find your PC IP:
 
 ```powershell
 ipconfig
 ```
 
-Use o IPv4 do adaptador Wi-Fi/Ethernet no `CODEX_BRIDGE_URL` e `CLAUDE_BRIDGE_URL`. O IP precisa ser acessivel pela ESP32 na mesma rede.
+The `.env` file is loaded by `scripts/load_env.py` during the PlatformIO build. Rebuild and upload the firmware after changing `.env`.
 
-O `.env` e carregado por `scripts/load_env.py` durante o build. Sempre que mudar `.env`, recompile e suba o firmware de novo.
+## 4. Run The Local Bridge
 
-## 4. Rodar a Bridge Local
-
-Em um terminal na raiz do projeto:
+Start the bridge:
 
 ```powershell
 py -3 server\run_server.py
 ```
 
-A bridge sobe em:
+It listens on:
 
 ```text
 http://0.0.0.0:8787
@@ -191,9 +237,10 @@ Endpoints:
 http://localhost:8787/api/codex
 http://localhost:8787/api/claude
 http://localhost:8787/api/summary
+http://localhost:8787/api/health
 ```
 
-Teste local:
+Test locally:
 
 ```powershell
 irm http://localhost:8787/api/codex
@@ -201,29 +248,21 @@ irm http://localhost:8787/api/claude
 irm http://localhost:8787/api/summary
 ```
 
-Teste pelo IP que a ESP32 usa:
+Test the IP used by the ESP32:
 
 ```powershell
-irm http://192.168.15.12:8787/api/codex
-irm http://192.168.15.12:8787/api/claude
+irm http://192.168.1.50:8787/api/summary
 ```
 
-Se funcionar em `localhost`, mas nao pelo IP, verifique firewall do Windows e se a ESP32 esta na mesma rede.
+If `localhost` works but the LAN IP does not, check Windows Firewall and confirm that the ESP32 and PC are on the same network.
 
-Para rodar em background:
+Run the bridge in the background:
 
 ```powershell
 Start-Process -WindowStyle Hidden -FilePath py -ArgumentList @("-3", "server\run_server.py") -WorkingDirectory (Get-Location)
 ```
 
-Para ver quem esta usando a porta:
-
-```powershell
-Get-NetTCPConnection -LocalPort 8787 -State Listen
-Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match "run_server.py" } | Select-Object ProcessId,CommandLine
-```
-
-Para parar bridges duplicadas:
+Stop duplicate bridge processes:
 
 ```powershell
 Get-CimInstance Win32_Process |
@@ -231,23 +270,19 @@ Get-CimInstance Win32_Process |
   ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 ```
 
-## 5. Dados do Codex
+## 5. Codex Data
 
-O servidor procura por padrao:
+By default the server reads:
 
 ```text
-C:\Users\SEU_USUARIO\.codex\state_5.sqlite
+C:\Users\YOUR_USER\.codex\state_5.sqlite
 ```
 
-Se o Codex nunca foi usado nessa maquina, o endpoint pode voltar sem dados. Abra/use o Codex antes de testar.
-
-Teste esperado:
+Expected healthy response:
 
 ```powershell
 irm http://localhost:8787/api/codex
 ```
-
-Resposta saudavel contem:
 
 ```json
 {
@@ -258,51 +293,51 @@ Resposta saudavel contem:
 }
 ```
 
-## 6. Dados do Claude Code
+If Codex has never been used on that machine, the endpoint can return no local data.
 
-O Claude Code alimenta:
+## 6. Claude Code Data
+
+Claude Code writes live status data to:
 
 ```text
 server/claude_status.json
 ```
 
-O servidor usa esse arquivo para preencher:
+The bridge also scans Claude local history under:
 
-- `display_value`
-- `percent_used`
-- `limit_label`
-- `reset_at`
+```text
+C:\Users\YOUR_USER\.claude\projects
+C:\Users\YOUR_USER\.claude\sessions
+```
 
-Teste esperado:
+Expected healthy response:
 
 ```powershell
 irm http://localhost:8787/api/claude
 ```
-
-Resposta saudavel contem:
 
 ```json
 {
   "id": "claude",
   "available": true,
   "status": "5h",
-  "display_value": "0%",
-  "percent_used": 0,
+  "display_value": "2%",
+  "percent_used": 2,
   "limit_label": "5h reset 06:10"
 }
 ```
 
-Se aparecer `available: false` ou `sem dados`, gere uma nova resposta no Claude Code e confira `server/claude_status.json`.
+If the response says `available: false` or `sem dados`, generate a new Claude Code response and check `server/claude_status.json`.
 
-## 7. Configuracao Manual Opcional do Server
+## 7. Optional Server Overrides
 
-Se quiser sobrescrever caminhos ou preencher dados manualmente, copie:
+Copy the example config only if you need manual paths or manual values:
 
 ```powershell
 Copy-Item server\config.example.json server\config.json
 ```
 
-Exemplo de `server/config.json` para Claude manual:
+Example manual Claude status:
 
 ```json
 {
@@ -324,28 +359,20 @@ Exemplo de `server/config.json` para Claude manual:
 }
 ```
 
-Normalmente nao precisa disso se o `statusLine` estiver funcionando.
+`server/config.json` is ignored by Git.
 
-## 8. Build do Firmware
+## 8. Build And Upload
 
-Compile:
+Build:
 
 ```powershell
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R
 ```
 
-Listar portas seriais:
+List serial ports:
 
 ```powershell
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe device list
-```
-
-Procure algo como:
-
-```text
-COM4
-----
-Description: USB-SERIAL CH340
 ```
 
 Upload:
@@ -354,38 +381,31 @@ Upload:
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t upload --upload-port COM4
 ```
 
-Se aparecer `Wrong boot mode detected`, faca o upload em modo manual:
-
-1. Segure `BOOT`.
-2. Rode o comando de upload.
-3. Se ficar em `Connecting...`, pressione e solte `EN/RST` uma vez mantendo `BOOT` pressionado.
-4. Solte `BOOT` quando aparecer `Writing at...` ou porcentagem.
-
-Monitor serial:
+Serial monitor:
 
 ```powershell
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe device monitor -b 115200 --port COM4
 ```
 
-## 9. Erase Completo Antes do Upload
+If upload fails with a boot mode error:
 
-Use erase quando a tela mostrar sobra visual de firmware antigo, comportamento estranho ou depois de trocar de projeto:
+1. Hold `BOOT`.
+2. Start the upload command.
+3. If it stays at `Connecting...`, press and release `EN/RST` once while holding `BOOT`.
+4. Release `BOOT` when writing starts.
+
+## 9. Full Erase
+
+Use a full erase when the display shows leftovers from old firmware or the board behaves strangely:
 
 ```powershell
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t erase --upload-port COM4
-```
-
-Depois grave de novo:
-
-```powershell
 & $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t upload --upload-port COM4
 ```
 
-O modo `BOOT` pode ser necessario tanto no erase quanto no upload.
+## 10. Board Pins
 
-## 10. Placa e Pinos
-
-Configuracao atual em `platformio.ini`:
+Current TFT configuration in `platformio.ini`:
 
 ```ini
 -D ILI9341_DRIVER=1
@@ -405,7 +425,7 @@ Configuracao atual em `platformio.ini`:
 -D SPI_TOUCH_FREQUENCY=2500000
 ```
 
-Touch XPT2046 configurado em `include/config.h`:
+Touch defaults in `include/config.h`:
 
 ```c
 #define TOUCH_CS 33
@@ -415,7 +435,7 @@ Touch XPT2046 configurado em `include/config.h`:
 #define TOUCH_CLK 25
 ```
 
-Se o touch estiver invertido ou desalinhado, crie `include/config.local.h` e sobrescreva:
+For a different touch calibration, create `include/config.local.h`:
 
 ```c
 #pragma once
@@ -429,28 +449,23 @@ Se o touch estiver invertido ou desalinhado, crie `include/config.local.h` e sob
 #define TOUCH_MAX_Y 3800
 ```
 
-## 11. Logos e Assets
+## Troubleshooting
 
-Os PNGs ficam em:
-
-```text
-imgs/codex.png
-imgs/claudecode.png
-```
-
-Para regenerar `src/logo_assets.c`:
+### ESP32 cannot reach the bridge
 
 ```powershell
-py -3 scripts\generate_logo_assets.py
+irm http://YOUR_PC_IP:8787/api/summary
 ```
 
-O firmware atual desenha o icone do Claude Code em LVGL, sem depender do PNG, para evitar problema de cor/alpha em alguns controladores TFT.
+Check:
 
-## 12. Troubleshooting
+- The IP in `.env` is the PC LAN IP.
+- The ESP32 and PC are on the same Wi-Fi/network.
+- Windows Firewall allows port `8787`.
+- The bridge is running.
+- The firmware was rebuilt after changing `.env`.
 
-### Claude Code aparece como `sem dados`
-
-Verifique:
+### Claude Code shows no data
 
 ```powershell
 Test-Path .\server\claude_status.json
@@ -458,125 +473,72 @@ Get-Content .\server\claude_status.json
 irm http://localhost:8787/api/claude
 ```
 
-Se o arquivo nao existir:
+Then open Claude Code normally and send a message. Avoid `--bare` and `--safe-mode`.
 
-1. Abra `claude` normalmente.
-2. Envie uma mensagem.
-3. Nao use `--bare` nem `--safe-mode`.
-4. Rode novamente `py -3 scripts\install_claude_statusline.py`.
-
-### Codex aparece sem dados
-
-Verifique se existe:
+### Codex shows no data
 
 ```powershell
 Test-Path $env:USERPROFILE\.codex\state_5.sqlite
 irm http://localhost:8787/api/codex
 ```
 
-Use o Codex nesta maquina para gerar historico local.
+Use Codex on this machine to generate local history.
 
-### ESP32 nao acessa o server
+### Display colors are swapped
 
-Teste pelo IP do PC:
-
-```powershell
-irm http://SEU_IP:8787/api/summary
-```
-
-Se `localhost` funciona e o IP nao:
-
-- confira se o IP no `.env` e o IP correto do PC;
-- confira se a ESP32 esta no mesmo Wi-Fi;
-- libere a porta `8787` no firewall do Windows;
-- reinicie a bridge.
-
-### Porta COM mudou
-
-Liste de novo:
-
-```powershell
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe device list
-```
-
-Use a porta CH340 encontrada, por exemplo `COM4` ou `COM5`.
-
-### Upload falha com boot mode
-
-Use o procedimento manual:
-
-```text
-segurar BOOT -> iniciar upload -> apertar EN/RST se necessario -> soltar BOOT quando escrever
-```
-
-### Tela mostra residuos ou projeto antigo
-
-Faca erase completo e upload:
-
-```powershell
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t erase --upload-port COM4
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t upload --upload-port COM4
-```
-
-O firmware tambem limpa a memoria do display no boot em multiplas rotacoes.
-
-### Cores estranhas no display
-
-O ajuste atual usa:
+The project currently uses:
 
 ```ini
 -D TFT_RGB_ORDER=TFT_RGB
 ```
 
-Se em outra placa vermelho/azul aparecerem invertidos, teste:
+If red and blue are inverted on your board, try:
 
 ```ini
 -D TFT_RGB_ORDER=TFT_BGR
 ```
 
-Depois recompile e suba o firmware.
+Then rebuild and upload again.
 
-## 13. Checklist Completo
+## GitHub Safety Checklist
 
-1. Instalar Python 3 e PlatformIO.
-2. Instalar Claude Code.
-3. Garantir `claude --version`.
-4. Rodar `py -3 scripts\install_claude_statusline.py`.
-5. Abrir Claude Code e enviar uma mensagem.
-6. Confirmar `server/claude_status.json`.
-7. Criar `.env` com Wi-Fi e IP do PC.
-8. Rodar `py -3 server\run_server.py`.
-9. Testar `/api/codex`, `/api/claude` e `/api/summary`.
-10. Compilar firmware.
-11. Fazer upload para a porta COM correta.
-12. Verificar a tela da ESP32.
-
-## Comandos Mais Usados
+Before publishing:
 
 ```powershell
-cd C:\Users\SEU_USUARIO\Documents\codes\codex-claude-project
-
-# Rodar bridge
-py -3 server\run_server.py
-
-# Testar endpoints
-irm http://localhost:8787/api/summary
-
-# Build
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R
-
-# Listar porta
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe device list
-
-# Upload
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t upload --upload-port COM4
-
-# Erase completo
-& $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run -e esp32-2432S028R -t erase --upload-port COM4
+git init
+git add .
+git status
 ```
 
-## Referencias
+Make sure these files are not staged:
 
-- Claude Code statusLine: https://docs.anthropic.com/en/docs/claude-code/statusline
-- Claude usage limits: https://support.claude.com/en/articles/11647753-how-do-usage-and-length-limits-work
-- PlatformIO CLI: https://docs.platformio.org/en/latest/core/index.html
+```text
+.env
+.pio/
+.vscode/
+server/config.json
+server/claude_status.json
+include/config.local.h
+```
+
+Then commit and push:
+
+```powershell
+git commit -m "Initial ESP32 token meter"
+git branch -M main
+git remote add origin https://github.com/YOUR_USER/YOUR_REPO.git
+git push -u origin main
+```
+
+## Notes
+
+- This project does not use OpenAI Platform Usage/Costs API, Codex Enterprise Analytics, or Anthropic Admin API.
+- Token and percentage values are local approximations based on files available on your machine.
+- Claude Code `statusLine` values are updated only when Claude Code executes the status line command.
+
+## References
+
+- [Claude Code statusLine](https://docs.anthropic.com/en/docs/claude-code/statusline)
+- [Claude usage limits](https://support.claude.com/en/articles/11647753-how-do-usage-and-length-limits-work)
+- [PlatformIO CLI](https://docs.platformio.org/en/latest/core/index.html)
+- [Optional 3D printed support on MakerWorld](https://makerworld.com/pt/models/1654522-bongo-cat-mini-monitor-animated-esp32-display?from=search#profileId-1749680)
