@@ -45,6 +45,12 @@ Hardware recomendado:
 - PC Windows rodando a bridge local.
 - Driver USB serial opcional, como CH340, dependendo da placa.
 
+Link de compra da placa usada neste projeto:
+
+- [Placa de Desenvolvimento ESP32 LVGL WIFI&Bluetooth com Tela Inteligente de 2.8" 240x320, Módulo LCD TFT de 2.8 polegadas com Toque](https://s.click.aliexpress.com/e/_c2z5DW13)
+
+Confira o anúncio, pinagem, driver do display e controlador touch antes de comprar, porque placas ESP32 com tela parecidas podem usar ligações diferentes.
+
 Suporte impresso opcional:
 
 - [Bongo Cat Mini Monitor Animated ESP32 Display no MakerWorld](https://makerworld.com/pt/models/1654522-bongo-cat-mini-monitor-animated-esp32-display?from=search#profileId-1749680)

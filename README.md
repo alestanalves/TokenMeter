@@ -45,6 +45,12 @@ Recommended hardware:
 - Windows PC running the local bridge.
 - Optional USB serial driver such as CH340, depending on your board.
 
+Board purchase link used for this build:
+
+- [ESP32 LVGL Wi-Fi & Bluetooth development board with 2.8-inch 240x320 TFT touch display](https://s.click.aliexpress.com/e/_c2z5DW13)
+
+Confirm the seller listing, pinout, display driver, and touch controller before buying, because similar ESP32 display boards can use different wiring.
+
 Optional printed support:
 
 - [Bongo Cat Mini Monitor Animated ESP32 Display on MakerWorld](https://makerworld.com/pt/models/1654522-bongo-cat-mini-monitor-animated-esp32-display?from=search#profileId-1749680)
