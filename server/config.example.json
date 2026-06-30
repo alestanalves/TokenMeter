@@ -1,0 +1,29 @@
+{
+  "bind": "0.0.0.0",
+  "port": 8787,
+  "providers": {
+    "codex": {
+      "enabled": true,
+      "window": "7d",
+      "window_label": "7 dias",
+      "limit_tokens": null,
+      "reset_at": null
+    },
+    "claude": {
+      "enabled": true,
+      "window": "7d",
+      "window_label": "7 dias locais",
+      "limit_tokens": null,
+      "reset_at": null,
+      "percent_used": null,
+      "display_value": null,
+      "limit_label": null,
+      "status": null
+    }
+  },
+  "paths": {
+    "codex_state_db": null,
+    "claude_roots": null,
+    "claude_status_json": null
+  }
+}

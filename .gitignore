@@ -1,0 +1,8 @@
+.pio/
+.vscode/
+.env
+server/claude_status.json
+server/config.json
+include/config.local.h
+__pycache__/
+*.pyc
